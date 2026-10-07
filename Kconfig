@@ -1,0 +1,14 @@
+# robohub-freertos Kconfig
+
+menu "RoboHub FreeRTOS middleware"
+
+config RH_FREERTOS
+    bool "FreeRTOS OSAL"
+    default n
+    help
+      FreeRTOS as the RoboHub OSAL: threads, millisecond delays and recursive
+      mutexes. Linking this middleware replaces the weak bare-metal defaults
+      robohub-core carries, and a program above it is unchanged — its periodic
+      tasks become FreeRTOS tasks and its event bus locks for real.
+
+endmenu
