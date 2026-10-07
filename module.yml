@@ -1,0 +1,70 @@
+#
+# robohub-freertos — FreeRTOS as the RoboHub OSAL.
+#
+# A middleware: it implements a contract robohub-common declares, in place of the
+# weak bare-metal defaults robohub-core carries. A program that links it runs
+# its periodic tasks as FreeRTOS tasks; one that does not is unchanged.
+#
+# @project RoboHub Platform
+# @license MIT
+#
+
+module:
+  name: robohub-freertos
+  type: middleware
+  version: 0.1.0
+  description: >
+    FreeRTOS as the RoboHub OSAL: threads, millisecond delays and recursive
+    mutexes over the FreeRTOS kernel, in place of the bare-metal defaults.
+
+  maintainer: "Aurel Miron"
+  license: "MIT"
+  created: "2026-10-07"
+
+build:
+  language: c
+  standard: c11
+  include_dirs:
+    - include/
+    - include/robohub/
+  sources:
+    - src/osal_freertos.c
+    - src/freertos_hooks.c
+
+depends:
+  - name: robohub-common
+    type: c
+    path: /home/miraur/projects/robohub-common
+    git: https://github.com/RoboHubPlatform/robohub-common
+    branch: main
+
+config:
+  dialect: linux
+  kconfig_fragments:
+    - Kconfig
+
+exports:
+  # What it exports besides the strong OSAL definitions is one opt-in header,
+  # for a caller that needs the FreeRTOS handle behind an OSAL one.
+  headers:
+    - robohub/freertos_ext.h
+  cmake:
+    target: "rho::robohub-freertos"
+    include_dirs:
+      - include
+    link_libraries:
+      - rho::robohub-common
+
+package:
+  kind: library
+  binary: false
+
+metadata:
+  tags:
+    - middleware
+    - freertos
+    - rtos
+    - osal
+    - threads
+  stability: experimental
+  visibility: public
