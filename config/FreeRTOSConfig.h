@@ -223,7 +223,13 @@ void robohub_freertos_panic(const char* file, int line);
 #define configENABLE_TRUSTZONE                  0
 #endif
 #ifndef configRUN_FREERTOS_SECURE_ONLY
-#define configRUN_FREERTOS_SECURE_ONLY          0
+#  if defined(PICO_RP2350)
+/* The RP2350 port this platform vendors has no TrustZone variant: it runs at
+ * one privilege level in the secure state, which is its documented mode. */
+#    define configRUN_FREERTOS_SECURE_ONLY      1
+#  else
+#    define configRUN_FREERTOS_SECURE_ONLY      0
+#  endif
 #endif
 
 /* The M33 implements four priority bits, so a priority is shifted up to sit in
@@ -247,7 +253,13 @@ void robohub_freertos_panic(const char* file, int line);
 #define configKERNEL_INTERRUPT_PRIORITY         ( 255 )
 #endif
 #ifndef configMAX_SYSCALL_INTERRUPT_PRIORITY
-#define configMAX_SYSCALL_INTERRUPT_PRIORITY    ( 191 )
+#  if defined(PICO_RP2350)
+/* The RP2350 port documents 16 as the value it is tested with, and the SDK
+ * installs its own interrupts against it. */
+#    define configMAX_SYSCALL_INTERRUPT_PRIORITY 16
+#  else
+#    define configMAX_SYSCALL_INTERRUPT_PRIORITY ( 191 )
+#  endif
 #endif
 /* The port's bridges to the SDK's synchronisation and time, so the two agree
  * about what a tick is and what a lock is. */
