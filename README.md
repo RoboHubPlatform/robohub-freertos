@@ -54,6 +54,24 @@ If the kernel is not fetched, this module still builds — its one source compil
 to nothing — and the bare-metal defaults stand. The module is only linked when a
 project declares it.
 
+## RP2350 / Pico 2W
+
+The RP2350 port the Pico platform carries runs in the secure state: its
+`FreeRTOSConfig.h` selects
+
+```c
+configRUN_FREERTOS_SECURE_ONLY = 1
+configMAX_SYSCALL_INTERRUPT_PRIORITY = 16
+```
+
+The generic defaults are neither, and a Pico 2W built with them never reaches
+the first task. The config is guarded by `PICO_RP2350`, so another platform
+keeps its own port values.
+
+The Pico platform also runs its USB-CDC pump on a task above the ordinary task
+priorities. A console write waits for the USB stack to drain, and a writer that
+outranks the pump would deadlock waiting for a stack that never runs.
+
 ## Adding it to a project
 
 ```yaml
@@ -73,3 +91,7 @@ c_connection:
 ## License
 
 MIT. See `LICENSE`.
+
+## Release history
+
+[CHANGELOG.md](CHANGELOG.md) — the changes in 0.1.1 and earlier releases.
