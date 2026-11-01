@@ -12,7 +12,7 @@
 module:
   name: robohub-freertos
   type: middleware
-  version: 0.1.0
+  version: 0.1.1
   description: >
     FreeRTOS as the RoboHub OSAL: threads, millisecond delays and recursive
     mutexes over the FreeRTOS kernel, in place of the bare-metal defaults.
