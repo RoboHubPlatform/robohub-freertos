@@ -11,7 +11,9 @@
 
 module:
   name: robohub-freertos
-  id: robohub-freertos
+  id: robohub.middleware.freertos
+  previous_ids:
+    - robohub-freertos
   type: middleware
   version: 0.1.1
   description: >
