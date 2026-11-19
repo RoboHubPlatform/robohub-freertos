@@ -44,15 +44,53 @@ The **port** and the **heap** are the platform's to choose, because the port
 names the part:
 
 ```sh
-rho build -target <board> .        # FREERTOS_PORT defaults to GCC_ARM_CM33
+rho build -target <board> .        # the port defaults to GCC_ARM_CM33_NTZ_NONSECURE
 ```
+
+`ROBOHUB_FREERTOS_PORT` names the upstream kernel's port and is passed to it as
+`FREERTOS_PORT`. Its default, `GCC_ARM_CM33_NTZ_NONSECURE`, is the Cortex-M33
+port without TrustZone, built with `-mcpu=cortex-m33 -mthumb -mfloat-abi=softfp
+-mfpu=fpv5-sp-d16` (`ROBOHUB_FREERTOS_ARCH_FLAGS`) and heap 4
+(`ROBOHUB_FREERTOS_HEAP`). It applies only when the module fetches or is pointed
+at an upstream kernel; a platform that defines `FreeRTOS-Kernel` itself (the
+RP2350 port, an STM32 port, an Xtensa one) brings its own port and none of these
+are read.
 
 The platform that builds for FreeRTOS also supplies `FreeRTOSConfig.h` on the
 include path.
 
-If the kernel is not fetched, this module still builds — its one source compiles
-to nothing — and the bare-metal defaults stand. The module is only linked when a
-project declares it.
+Its two sources, `src/osal_freertos.c` (the OSAL) and `src/freertos_hooks.c`
+(the kernel's fatal hooks), are guarded by `RH_FREERTOS_KERNEL_PRESENT`, which
+this module's CMake defines with the kernel. A build that compiles them without
+it — no kernel, no FreeRTOS headers — gets two empty objects, and the bare-metal
+defaults stand. The module is only linked when a project declares it.
+
+## When the kernel fails
+
+The base `FreeRTOSConfig.h` turns both kernel checks on:
+
+```c
+configCHECK_FOR_STACK_OVERFLOW = 2   /* method 2: the pointer and the fill pattern */
+configUSE_MALLOC_FAILED_HOOK   = 1
+```
+
+A platform or application that cannot afford them defines either as 0 before
+the file is read. With them on, a task that overflows its stack or a failed
+allocation reaches `src/freertos_hooks.c`, which writes
+`[robohub-freertos] panic: task stack overflow (<task>)` or
+`... heap allocation failed` to the console. A failed `configASSERT` writes
+`[robohub-freertos] assertion failed at <file>` (`robohub_freertos_panic`, weak,
+so a platform can show more).
+
+All three stop the same way: the line, then interrupts enabled and
+`robohub_freertos_console_drain()`, then interrupts disabled and the halt. A
+console write only queues the bytes; an interrupt sends them, so disabling
+interrupts first stops the board with the line unsent. The stack check runs in
+the context switch with interrupts masked, which is why the drain enables them.
+The default drain waits `RH_FREERTOS_PANIC_DRAIN_MS` (100 ms, counted against
+`configCPU_CLOCK_HZ`); it is weak, and the Pico 2W defines it to pump its USB
+console until the CDC FIFO is empty (at most 250 ms) or to wait out the UART's
+FIFO.
 
 ## RP2350 / Pico 2W
 

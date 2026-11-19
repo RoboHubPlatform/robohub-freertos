@@ -1,0 +1,113 @@
+# What robohub-freertos gives RoboHub: FreeRTOS as the OSAL robohub-common
+# declares, the kernel it builds against, the RP2350 port values and the hooks
+# that report a kernel failure (src/osal_freertos.c, src/freertos_hooks.c,
+# config/FreeRTOSConfig.h, CMakeLists.txt). Written in the R5 backfill from the
+# documentation, the changelog, the code and an example build; proposed until
+# the maintainer approves them.
+level: NODE
+prefix: RTOS
+title: FreeRTOS middleware
+requirements:
+  - id: RTOS-0001
+    title: Linking the module makes the OSAL FreeRTOS
+    statement: >
+      With a kernel present, the module shall define the OSAL functions of
+      robohub/osal.h strongly over FreeRTOS, so that robohub_osal_rtos_present
+      answers true, a thread is a FreeRTOS task whose stack is given in bytes and
+      rounded up to whole words, a sleep is vTaskDelay of the milliseconds in
+      ticks, and robohub_osal_start starts the scheduler and never returns.
+    rationale: Linking the module is the whole of how an RTOS is chosen; the runtime then gives each periodic task its own thread with no change above it.
+    satisfies: [SYS-0046]
+    status: proposed
+    verification: inspection
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [osal, threads]
+
+  - id: RTOS-0002
+    title: The OSAL mutex is recursive
+    statement: >
+      robohub_osal_mutex_create shall create a FreeRTOS recursive mutex, lock
+      shall take it recursively waiting without limit, and lock, unlock and
+      destroy shall ignore a null mutex.
+    rationale: The event bus locks around publish, and a handler that publishes from inside it must not deadlock.
+    satisfies: [SYS-0046]
+    status: proposed
+    verification: inspection
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [osal, mutex]
+
+  - id: RTOS-0003
+    title: Without a kernel the bare-metal defaults stand
+    statement: >
+      Built without a kernel (RH_FREERTOS_KERNEL_PRESENT undefined), the
+      module's sources shall compile to nothing, leaving robohub-common's weak
+      bare-metal OSAL defaults in place.
+    rationale: The same runtime runs the cooperative loop when the dependency is removed or the kernel is not there.
+    satisfies: [SYS-0046]
+    status: proposed
+    verification: inspection
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [osal, bare-metal]
+
+  - id: RTOS-0004
+    title: The kernel is the platform's, a named checkout, or a pinned release
+    statement: >
+      The module shall build against the FreeRTOS-Kernel the platform defined
+      when there is one, else the checkout named by ROBOHUB_FREERTOS_KERNEL_PATH
+      or FREERTOS_KERNEL_PATH, else `vendor/FreeRTOS-Kernel`, else fetch release
+      V11.1.0, with the port and heap the platform names
+      (GCC_ARM_CM33_NTZ_NONSECURE and heap_4 by default).
+    rationale: Which port a core needs is the platform's fact; the module is written for all of them.
+    satisfies: [SYS-0046]
+    status: proposed
+    verification: demonstration
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [kernel, build]
+
+  - id: RTOS-0005
+    title: The RP2350 runs secure-only with its interrupt priority
+    statement: >
+      The configuration shall set configRUN_FREERTOS_SECURE_ONLY to 1 and
+      configMAX_SYSCALL_INTERRUPT_PRIORITY to 16 when PICO_RP2350 is defined,
+      and 0 and 191 otherwise, with a 1000 Hz tick and a heap of ROBOHUB_HEAP_SIZE
+      (48 KiB when the platform names none), each overridable by the platform.
+    rationale: A Pico 2W built with the generic values never reaches its first task.
+    satisfies: [SYS-0046]
+    status: proposed
+    verification: demonstration
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [config, rp2350]
+
+  - id: RTOS-0006
+    title: A kernel failure is said on the console before the board stops
+    statement: >
+      The stack-overflow and allocation-failure hooks shall write
+      `[robohub-freertos] panic:` with the cause (and the task's name for an
+      overflow) to the console, and the weak robohub_freertos_panic shall write
+      the failed assertion's file; each shall then enable interrupts, call
+      robohub_freertos_console_drain (weak: a bounded wait by default, a real
+      flush where the platform defines one), and only then disable interrupts
+      and halt.
+    rationale: A board that can say "stack overflow" is worth a garbled line; a silent hang is not diagnosable, and a console write is only queued until an interrupt sends it.
+    satisfies: [SYS-0050]
+    status: proposed
+    verification: test
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [hooks, observability]
+
+  - id: RTOS-0007
+    title: The kernel's stack and heap checks are on by default
+    statement: The base configuration shall define configCHECK_FOR_STACK_OVERFLOW as 2 and configUSE_MALLOC_FAILED_HOOK as 1 unless a platform or application defines them first.
+    rationale: "Off by default, RTOS-0006's hooks are never reached unless a platform asks for them, and none did: an overflowed stack corrupted the program silently."
+    satisfies: [SYS-0050]
+    status: proposed
+    verification: test
+    owner: maintainer
+    changed: 2026-11-19
+    tags: [hooks, config]

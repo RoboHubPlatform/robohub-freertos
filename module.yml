@@ -15,7 +15,7 @@ module:
   previous_ids:
     - robohub-freertos
   type: middleware
-  version: 0.1.1
+  version: 0.1.2
   description: >
     FreeRTOS as the RoboHub OSAL: threads, millisecond delays and recursive
     mutexes over the FreeRTOS kernel, in place of the bare-metal defaults.
@@ -23,6 +23,10 @@ module:
   maintainer: "Aurel Miron"
   license: "MIT"
   created: "2026-10-07"
+
+# The middleware's requirements are numbered RTOS-NNNN and serve the system
+# requirements robohub holds.
+requirements: { prefix: RTOS, parent: robohub }
 
 build:
   language: c
@@ -76,6 +80,6 @@ docs:
   title: robohub-freertos
   section: modules
   order: "10"
-  index: docs/index.md
+  index: docs/doc/index.md
   sources:
-    - docs/index.md
+    - docs/doc/index.md

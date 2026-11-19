@@ -184,11 +184,19 @@
 #ifndef configUSE_TICK_HOOK
 #define configUSE_TICK_HOOK                     0
 #endif
+/* The two kernel checks are on by default, so a stack that overflowed or a heap
+ * that ran out is said on the console (src/freertos_hooks.c, RTOS-0006) rather
+ * than left to corrupt the program. Off, the hooks are never reached unless a
+ * platform asks for them, and none did. Method 2 checks the stack's high-water
+ * pattern as well as the pointer at each switch: a few cycles per context
+ * switch and the pattern fill at task creation, which every part this runs on
+ * can afford. A platform that cannot defines either as 0 before this file. */
+/* @req RTOS-0007 */
 #ifndef configUSE_MALLOC_FAILED_HOOK
-#define configUSE_MALLOC_FAILED_HOOK            0
+#define configUSE_MALLOC_FAILED_HOOK            1
 #endif
 #ifndef configCHECK_FOR_STACK_OVERFLOW
-#define configCHECK_FOR_STACK_OVERFLOW          0
+#define configCHECK_FOR_STACK_OVERFLOW          2
 #endif
 #ifndef configUSE_TRACE_FACILITY
 #define configUSE_TRACE_FACILITY                0
@@ -222,6 +230,7 @@ void robohub_freertos_panic(const char* file, int line);
 #ifndef configENABLE_TRUSTZONE
 #define configENABLE_TRUSTZONE                  0
 #endif
+/* @req RTOS-0005 */
 #ifndef configRUN_FREERTOS_SECURE_ONLY
 #  if defined(PICO_RP2350)
 /* The RP2350 port this platform vendors has no TrustZone variant: it runs at
@@ -252,6 +261,7 @@ void robohub_freertos_panic(const char* file, int line);
 #ifndef configKERNEL_INTERRUPT_PRIORITY
 #define configKERNEL_INTERRUPT_PRIORITY         ( 255 )
 #endif
+/* @req RTOS-0005 */
 #ifndef configMAX_SYSCALL_INTERRUPT_PRIORITY
 #  if defined(PICO_RP2350)
 /* The RP2350 port documents 16 as the value it is tested with, and the SDK

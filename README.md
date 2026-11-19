@@ -44,15 +44,26 @@ The **port** and the **heap** are the platform's to choose, because the port
 names the part:
 
 ```sh
-rho build -target <board> .        # FREERTOS_PORT defaults to GCC_ARM_CM33
+rho build -target <board> .        # the port defaults to GCC_ARM_CM33_NTZ_NONSECURE
 ```
+
+`ROBOHUB_FREERTOS_PORT` names the upstream kernel's port and is passed to it as
+`FREERTOS_PORT`. Its default, `GCC_ARM_CM33_NTZ_NONSECURE`, is the Cortex-M33
+port without TrustZone, built with `-mcpu=cortex-m33 -mthumb -mfloat-abi=softfp
+-mfpu=fpv5-sp-d16` (`ROBOHUB_FREERTOS_ARCH_FLAGS`) and heap 4
+(`ROBOHUB_FREERTOS_HEAP`). It applies only when the module fetches or is pointed
+at an upstream kernel; a platform that defines `FreeRTOS-Kernel` itself (the
+RP2350 port, an STM32 port, an Xtensa one) brings its own port and none of these
+are read.
 
 The platform that builds for FreeRTOS also supplies `FreeRTOSConfig.h` on the
 include path.
 
-If the kernel is not fetched, this module still builds — its one source compiles
-to nothing — and the bare-metal defaults stand. The module is only linked when a
-project declares it.
+Its two sources, `src/osal_freertos.c` (the OSAL) and `src/freertos_hooks.c`
+(the kernel's fatal hooks), are guarded by `RH_FREERTOS_KERNEL_PRESENT`, which
+this module's CMake defines with the kernel. A build that compiles them without
+it — no kernel, no FreeRTOS headers — gets two empty objects, and the bare-metal
+defaults stand. The module is only linked when a project declares it.
 
 ## RP2350 / Pico 2W
 

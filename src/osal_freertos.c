@@ -17,12 +17,14 @@
 
 #include "robohub/osal.h"
 
+// @req RTOS-0003
 #if defined(RH_FREERTOS_KERNEL_PRESENT)
 
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
 
+// @req RTOS-0001
 rh_bool robohub_osal_rtos_present(void)
 {
     return RH_TRUE;
@@ -38,6 +40,7 @@ void robohub_osal_start(void)
     }
 }
 
+// @req RTOS-0001
 int robohub_osal_thread_create(robohub_thread_t* thread,
                                const robohub_osal_thread_config* config)
 {
@@ -73,6 +76,7 @@ rh_u32 robohub_osal_now_ms(void)
     return (rh_u32)(xTaskGetTickCount() * (TickType_t)portTICK_PERIOD_MS);
 }
 
+// @req RTOS-0002
 robohub_mutex_t robohub_osal_mutex_create(void)
 {
     return (robohub_mutex_t)xSemaphoreCreateRecursiveMutex();

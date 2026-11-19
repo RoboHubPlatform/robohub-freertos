@@ -1,0 +1,25 @@
+# The tests this module has, declared rather than discovered (see
+# robohub-stm32/tests/tests.yml for the vocabulary).
+
+name: robohub-freertos
+
+suites:
+
+  # The kernel diagnostics on the host: the stack and heap checks on by default
+  # in config/FreeRTOSConfig.h, and every fatal path in src/freertos_hooks.c
+  # writing its line, draining the console with interrupts enabled, and only
+  # then disabling interrupts and halting.
+  # @verifies RTOS-0006, RTOS-0007
+  - name: hooks
+    kind: command
+    tags: [unit, host]
+    command: [python3, tests/hooks_test.py]
+
+  # Without a kernel: every source module.yml lists compiles with
+  # RH_FREERTOS_KERNEL_PRESENT undefined and no FreeRTOS headers, and defines
+  # nothing, so the bare-metal defaults stand.
+  # @verifies RTOS-0003
+  - name: bare
+    kind: command
+    tags: [unit, host]
+    command: [python3, tests/bare_test.py]
